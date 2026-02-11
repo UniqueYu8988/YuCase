@@ -1,0 +1,1268 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鐥呭巻濉姤 - 绮剧畝鐗?/title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #334155;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 80px;
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin: 0 0 20px 0;
+            color: var(--primary);
+            font-size: 1.25rem;
+        }
+
+        /* Compact Grid Layout */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .field-box {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .field-box:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .value {
+            font-weight: 500;
+            min-height: 20px;
+            outline: none;
+            word-break: break-all;
+        }
+
+        .value:empty::before {
+            content: '-';
+            color: #e2e8f0;
+        }
+
+        /* Edit Mode */
+        body.edit-mode .value {
+            border-bottom: 1px dashed var(--primary);
+            background: #fdf5ff;
+        }
+
+        /* Helpers */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .double-width {
+            grid-column: span 2;
+        }
+
+        /* Controls */
+        .toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: flex;
+            gap: 15px;
+            border: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        .nav-group {
+            display: flex;
+            gap: 5px;
+            background: #e2e8f0;
+            padding: 3px;
+            border-radius: 20px;
+        }
+
+        .btn-reset {
+            background: #94a3b8;
+        }
+
+        .btn-prev,
+        .btn-next {
+            background: #64748b;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+        }
+
+        .btn-save {
+            background: #ef4444;
+        }
+
+        .btn-copy {
+            background: #10b981;
+        }
+
+        /* Hidden Placeholders (keep DOM for automation) */
+        .field-box:has([data-key="ph_auto"]) {
+            opacity: 0;
+            pointer-events: none;
+            border: none;
+            background: transparent;
+        }
+
+        /* Circular Buttons */
+        .btn {
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1.2rem;
+            /* Enhance Emoji Support */
+            font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif;
+            transition: transform 0.1s, box-shadow 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            display: none;
+            z-index: 2000;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- 妯″潡涓€锛氬熀鏈俊鎭?-->
+        <h2>妯″潡涓€锛氬熀鏈俊鎭?/h2>
+        <div class="module-grid">
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鐥呮鍙?/div>
+                <div class="value" data-key="field_1_3"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍖荤枟浠樻鏂瑰紡</div>
+                <div class="value" data-key="field_1_1">2</div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">绗?N 娆′綇闄?/div>
+                <div class="value" data-key="field_1_2"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鐥呮鍙?/div>
+                <div class="value" data-key="field_1_3"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">濮撳悕</div>
+                <div class="value" data-key="field_1_4"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鎬у埆</div>
+                <div class="value" data-key="field_1_5"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍑虹敓鏃ユ湡</div>
+                <div class="value" data-key="field_1_6"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">骞撮緞</div>
+                <div class="value" data-key="field_1_7"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍥界睄</div>
+                <div class="value" data-key="field_1_8">CHN</div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box double-width" onclick="copyVal(this)">
+                <div class="label">绫嶈疮</div>
+                <div class="value" data-key="field_1_9_native"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">姘戞棌</div>
+                <div class="value" data-key="field_1_10"></div>
+            </div>
+            <div class="field-box double-width" onclick="copyVal(this)">
+                <div class="label">韬唤璇佸彿</div>
+                <div class="value" data-key="field_1_11"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鑱屼笟</div>
+                <div class="value" data-key="field_1_12"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">濠氬Щ</div>
+                <div class="value" data-key="field_1_13"></div>
+            </div>
+            <div class="field-box double-width" onclick="copyVal(this)">
+                <div class="label">鍑虹敓鍦?/div>
+                <div class="value" data-key="field_1_9"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鐢佃瘽</div>
+                <div class="value" data-key="field_1_15"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box double-width" onclick="copyVal(this)">
+                <div class="label">鍑虹敓鍦?2)</div>
+                <div class="value" data-key="field_1_14"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鑱旂郴浜哄鍚?/div>
+                <div class="value" data-key="field_1_17"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍏崇郴</div>
+                <div class="value" data-key="field_1_18"></div>
+            </div>
+            <div class="field-box double-width" onclick="copyVal(this)">
+                <div class="label">鍑虹敓鍦?3)</div>
+                <div class="value" data-key="field_1_16"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鐢佃瘽</div>
+                <div class="value" data-key="field_1_15"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍏ラ櫌閫斿緞</div>
+                <div class="value" data-key="field_1_21">2</div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍏ラ櫌鏃堕棿</div>
+                <div class="value" data-key="field_1_22_1"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍏ラ櫌鏃?/div>
+                <div class="value" data-key="field_1_22_2"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍏ラ櫌绉戝埆</div>
+                <div class="value" data-key="field_1_23">绮剧绉?/div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍑洪櫌鏃堕棿</div>
+                <div class="value" data-key="field_1_24_1"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍑洪櫌鏃?/div>
+                <div class="value" data-key="field_1_24_2"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍑洪櫌绉戝埆</div>
+                <div class="value" data-key="field_1_25">绮剧绉?/div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">瀹為檯浣忛櫌锛堝ぉ锛?/div>
+                <div class="value" data-key="field_1_26"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box double-width" onclick="copyVal(this)">
+                <div class="label">闂紙鎬ワ級璇婅瘖鏂?/div>
+                <div class="value" data-key="field_1_27"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鐤剧梾缂栫爜</div>
+                <div class="value" data-key="field_1_28"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍏ラ櫌鐥呮儏</div>
+                <div class="value" data-key="field_1_29">1</div>
+            </div>
+            <div class="field-box double-width" onclick="copyVal(this)">
+                <div class="label">闂紙鎬ワ級璇婅瘖鏂?/div>
+                <div class="value" data-key="field_1_27"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鐤剧梾缂栫爜</div>
+                <div class="value" data-key="field_1_28"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鍏ラ櫌鐥呮儏</div>
+                <div class="value" data-key="field_1_29">1</div>
+            </div>
+        </div>
+
+        <!-- 妯″潡浜岋細鍖绘姢浜哄憳 -->
+        <h2>妯″潡浜岋細鍖绘姢浜哄憳</h2>
+        <div class="module-grid">
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">绉戜富浠?/div>
+                <div class="value" data-key="field_2_1"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">涓伙紙鍓富锛変换鍖诲笀</div>
+                <div class="value" data-key="field_2_2"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">涓绘不鍖诲笀</div>
+                <div class="value" data-key="field_2_3"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">浣忛櫌鍖诲笀</div>
+                <div class="value" data-key="field_2_4"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">璐ｄ换鎶ゅ＋</div>
+                <div class="value" data-key="field_2_5"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鐥呮璐ㄩ噺</div>
+                <div class="value" data-key="field_2_6">1</div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">璐ㄦ帶鍖诲笀</div>
+                <div class="value" data-key="field_2_7"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">璐ㄦ帶鎶ゅ＋</div>
+                <div class="value" data-key="field_2_8"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">璐ㄦ帶鏃ユ湡</div>
+                <div class="value" data-key="field_2_9"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鐥呮璐ㄩ噺</div>
+                <div class="value" data-key="field_2_10">1</div>
+            </div>
+        </div>
+
+        <!-- 妯″潡涓夛細璐圭敤 -->
+        <h2>妯″潡涓夛細璐圭敤</h2>
+        <div class="module-grid">
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鎬昏垂鐢?/div>
+                <div class="value" data-key="field_3_1"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">鑷粯閲戦</div>
+                <div class="value" data-key="field_3_2"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?锛変竴鑸不鐤楁搷浣滆垂</div>
+                <div class="value" data-key="field_3_3"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?锛夋姢鐞嗚垂</div>
+                <div class="value" data-key="field_3_4"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?锛夊叾浠栬垂鐢?/div>
+                <div class="value" data-key="field_3_5"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?锛夊疄楠屽璇婃柇璐?/div>
+                <div class="value" data-key="field_3_6"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?锛夊奖鍍忓璇婃柇</div>
+                <div class="value" data-key="field_3_7"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?3锛夎タ鑽垂</div>
+                <div class="value" data-key="field_3_8"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?4锛変腑鎴愯嵂璐?/div>
+                <div class="value" data-key="field_3_9"></div>
+            </div>
+            <div class="field-box">
+                <div class="label">锛堝崰浣嶏級</div>
+                <div class="value" data-key="ph_auto"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?5锛変腑鑽夎嵂璐?/div>
+                <div class="value" data-key="field_3_10"></div>
+            </div>
+            <div class="field-box" onclick="copyVal(this)">
+                <div class="label">锛?4锛夊叾浠栬垂</div>
+                <div class="value" data-key="field_3_11"></div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- 鎮诞宸ュ叿鏍?-->
+    <div class="toolbar">
+        <div class="page-info" id="pageInfo">1 / 1</div>
+        <div class="nav-group">
+            <button class="btn btn-prev" onclick="nav(-1)">鈼€锔?/button>
+            <button class="btn btn-next" onclick="nav(1)">鈻讹笍</button>
+        </div>
+        <button class="btn btn-edit" onclick="toggleEdit()" id="btnEdit">鉁忥笍</button>
+        <button class="btn btn-save" onclick="save()">馃捑</button>
+        <button class="btn btn-copy" onclick="exportJSON()">馃搼</button>
+        <button class="btn btn-reset" onclick="reset()">馃棏锔?/button>
+    </div>
+
+    <div class="toast" id="toast">澶嶅埗鎴愬姛</div>
+
+    
+    <script>
+        // Init Empty Data
+        const defaultRecord = {
+            "field_1_8": "CHN", "field_1_1": "2", "field_1_13": "2", "field_1_21": "2",
+            "field_1_29": "1", "field_2_6": "1", "field_2_10": "1",
+            "field_1_23": "绮剧绉?, "field_1_25": "绮剧绉?
+        };
+
+        let records = [
+    {
+        "field_1_1": "02",
+        "field_1_2": "5",
+        "field_1_3": "618",
+        "field_1_4": "閮戝皬浜?,
+        "field_1_11": "410184199701019151",
+        "field_1_5": "1",
+        "field_1_6": "1997-01-01",
+        "field_1_7": "28",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪佹柊閮戝競姊ㄦ渤闀囬儜璁歌矾29鍙?,
+        "field_1_9_native": "娌冲崡鐪佹柊閮戝競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪佹柊閮戝競姊ㄦ渤闀囬儜璁歌矾29鍙?,
+        "field_1_15": "15093398838",
+        "field_1_16": "娌冲崡鐪佹柊閮戝競姊ㄦ渤闀囬儜璁歌矾29鍙?,
+        "field_1_17": "寮犳捣瀹?,
+        "field_1_18": "8",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-03",
+        "field_1_22_2": "10",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-22",
+        "field_1_24_2": "09",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "80",
+        "field_1_27": "绮剧鍙戣偛杩熺紦锛岄渶瑕佸姞浠ュ叧娉ㄦ垨娌荤枟鐨勬樉钁楄涓虹己闄?,
+        "field_1_28": "F79.100",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鏈变匠浣?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-22",
+        "field_2_10": "1",
+        "field_3_1": "16371.35",
+        "field_3_2": "96.20",
+        "field_3_3": "9056.60",
+        "field_3_4": "3323.07",
+        "field_3_5": "2643.19",
+        "field_3_6": "312.09",
+        "field_3_7": "50.76",
+        "field_3_8": "136.08",
+        "field_3_9": "24.53",
+        "field_3_10": "747.53",
+        "field_3_11": "77.50"
+    },
+    {
+        "field_1_1": "02",
+        "field_1_2": "1",
+        "field_1_3": "621",
+        "field_1_4": "鏉庢爲浠?,
+        "field_1_11": "532924197410110024",
+        "field_1_5": "2",
+        "field_1_6": "1974-10-11",
+        "field_1_7": "51",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪侀暱钁涘競瀹樹涵涔℃潕鑹簵鏉戝叚缁?,
+        "field_1_9_native": "娌冲崡鐪侀暱钁涘競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "宸插",
+        "field_1_14": "娌冲崡鐪侀暱钁涘競瀹樹涵涔℃潕鑹簵鏉戝叚缁?,
+        "field_1_15": "15038912181",
+        "field_1_16": "娌冲崡鐪侀暱钁涘競瀹樹涵涔℃潕鑹簵鏉戝叚缁?,
+        "field_1_17": "鏉庝繚淇?,
+        "field_1_18": "1",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-03",
+        "field_1_22_2": "13",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-24",
+        "field_1_24_2": "15",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "82",
+        "field_1_27": "绮剧鍒嗚鐥?,
+        "field_1_28": "F20.900",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鏈变匠浣?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-24",
+        "field_2_10": "1",
+        "field_3_1": "15583.07",
+        "field_3_2": "77.50",
+        "field_3_3": "8658.99",
+        "field_3_4": "3166.11",
+        "field_3_5": "2466.71",
+        "field_3_6": "328.56",
+        "field_3_7": "274.86",
+        "field_3_8": "95.96",
+        "field_3_9": "0.00",
+        "field_3_10": "504.38",
+        "field_3_11": "87.50"
+    },
+    {
+        "field_1_1": "02",
+        "field_1_2": "5",
+        "field_1_3": "625",
+        "field_1_4": "閮崰钀?,
+        "field_1_11": "410184198706138315",
+        "field_1_5": "1",
+        "field_1_6": "1987-06-13",
+        "field_1_7": "38",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪佹柊閮戝競杈涘簵闀囩櫧搴欐潙20鍙?,
+        "field_1_9_native": "娌冲崡鐪佹柊閮戝競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪佹柊閮戝競杈涘簵闀囩櫧搴欐潙20鍙?,
+        "field_1_15": "15333818628",
+        "field_1_16": "娌冲崡鐪佹柊閮戝競杈涘簵闀囩櫧搴欐潙20鍙?,
+        "field_1_17": "閮崰寮?,
+        "field_1_18": "7",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-04",
+        "field_1_22_2": "08",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-23",
+        "field_1_24_2": "11",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "80",
+        "field_1_27": "绮剧鍙戣偛杩熺紦锛岄渶瑕佸姞浠ュ叧娉ㄦ垨娌荤枟鐨勬樉钁楄涓虹己闄?,
+        "field_1_28": "F79.100",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鐜嬮箯鍗?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-23",
+        "field_2_10": "1",
+        "field_3_1": "15330.39",
+        "field_3_2": "75.00",
+        "field_3_3": "8491.50",
+        "field_3_4": "3126.87",
+        "field_3_5": "2446.81",
+        "field_3_6": "275.31",
+        "field_3_7": "50.76",
+        "field_3_8": "81.85",
+        "field_3_9": "0.00",
+        "field_3_10": "772.29",
+        "field_3_11": "85.00"
+    },
+    {
+        "field_1_1": "02",
+        "field_1_2": "3",
+        "field_1_3": "626",
+        "field_1_4": "楂樿壆瀛?,
+        "field_1_11": "410184197001057721",
+        "field_1_5": "2",
+        "field_1_6": "1970-01-05",
+        "field_1_7": "55",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪佹柊閮戝競杈涘簵闀囧寳鐧藉湡鍨?3鍙?,
+        "field_1_9_native": "娌冲崡鐪佹柊閮戝競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪佹柊閮戝競杈涘簵闀囧寳鐧藉湡鍨?3鍙?,
+        "field_1_15": "18339909417",
+        "field_1_16": "娌冲崡鐪佹柊閮戝競杈涘簵闀囧寳鐧藉湡鍨?3鍙?,
+        "field_1_17": "闄堝缓浼?,
+        "field_1_18": "1",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-04",
+        "field_1_22_2": "08",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-24",
+        "field_1_24_2": "15",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "81",
+        "field_1_27": "绮剧鍙戣偛杩熺紦锛岄渶瑕佸姞浠ュ叧娉ㄦ垨娌荤枟鐨勬樉钁楄涓虹己闄?,
+        "field_1_28": "F79.100",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鏈变匠浣?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-24",
+        "field_2_10": "1",
+        "field_3_1": "15288.37",
+        "field_3_2": "101.52",
+        "field_3_3": "8491.50",
+        "field_3_4": "3126.87",
+        "field_3_5": "2446.81",
+        "field_3_6": "275.31",
+        "field_3_7": "50.76",
+        "field_3_8": "41.55",
+        "field_3_9": "99.86",
+        "field_3_10": "670.71",
+        "field_3_11": "85.00"
+    },
+    {
+        "field_1_1": "02",
+        "field_1_2": "8",
+        "field_1_3": "627",
+        "field_1_4": "鏇句僵闊?,
+        "field_1_11": "441882199408044528",
+        "field_1_5": "2",
+        "field_1_6": "1994-08-04",
+        "field_1_7": "31",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪佹柊閮戝競瀛熷簞闀囬夯绾垮紶50鍙?,
+        "field_1_9_native": "娌冲崡鐪佹柊閮戝競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪佹柊閮戝競瀛熷簞闀囬夯绾垮紶50鍙?,
+        "field_1_15": "15346580815",
+        "field_1_16": "娌冲崡鐪佹柊閮戝競瀛熷簞闀囬夯绾垮紶50鍙?,
+        "field_1_17": "寮犵尞鍐?,
+        "field_1_18": "1",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-05",
+        "field_1_22_2": "08",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-22",
+        "field_1_24_2": "10",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "78",
+        "field_1_27": "绮剧鍒嗚鐥?,
+        "field_1_28": "F20.900",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鐜嬮『灏?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-22",
+        "field_2_10": "1",
+        "field_3_1": "15939.43",
+        "field_3_2": "72.50",
+        "field_3_3": "8865.36",
+        "field_3_4": "3108.06",
+        "field_3_5": "2409.41",
+        "field_3_6": "278.91",
+        "field_3_7": "50.76",
+        "field_3_8": "323.23",
+        "field_3_9": "0.00",
+        "field_3_10": "821.20",
+        "field_3_11": "82.50"
+    },
+    {
+        "field_1_1": "01",
+        "field_1_2": "3",
+        "field_1_3": "630",
+        "field_1_4": "闊╁啺",
+        "field_1_11": "410103197202102447",
+        "field_1_5": "2",
+        "field_1_6": "1972-02-10",
+        "field_1_7": "53",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪侀儜宸炲競浜屼竷鍖烘樊鍖楄7鍙烽櫌闄?3鍙?,
+        "field_1_9_native": "娌冲崡鐪侀儜宸炲競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "閫€ (绂? 浼戜汉鍛?,
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪侀儜宸炲競浜屼竷鍖烘樊鍖楄7鍙烽櫌闄?3鍙?,
+        "field_1_15": "13183007676",
+        "field_1_16": "娌冲崡鐪侀儜宸炲競浜屼竷鍖烘樊鍖楄7鍙烽櫌闄?3鍙?,
+        "field_1_17": "闊╁啲",
+        "field_1_18": "7",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-06",
+        "field_1_22_2": "08",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-25",
+        "field_1_24_2": "16",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "80",
+        "field_1_27": "绮剧闅滅",
+        "field_1_28": "F99.",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鐜嬮『灏?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-25",
+        "field_2_10": "1",
+        "field_3_1": "13536.98",
+        "field_3_2": "70.00",
+        "field_3_3": "6558.12",
+        "field_3_4": "3089.25",
+        "field_3_5": "2372.01",
+        "field_3_6": "275.31",
+        "field_3_7": "50.76",
+        "field_3_8": "427.14",
+        "field_3_9": "0.00",
+        "field_3_10": "684.39",
+        "field_3_11": "80.00"
+    },
+    {
+        "field_1_1": "02",
+        "field_1_2": "6",
+        "field_1_3": "632",
+        "field_1_4": "榄忔捣姊?,
+        "field_1_11": "41018419630321904X",
+        "field_1_5": "2",
+        "field_1_6": "1963-03-21",
+        "field_1_7": "62",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪佹柊閮戝競鏄熸腐璺?鍙锋柊娓ぞ鍖?鍙?,
+        "field_1_9_native": "娌冲崡鐪佹柊閮戝競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪佹柊閮戝競鏄熸腐璺?鍙锋柊娓ぞ鍖?鍙?,
+        "field_1_15": "19715558522",
+        "field_1_16": "娌冲崡鐪佹柊閮戝競鏄熸腐璺?鍙锋柊娓ぞ鍖?鍙?,
+        "field_1_17": "鍚村ぉ浣?,
+        "field_1_18": "2",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-07",
+        "field_1_22_2": "08",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-24",
+        "field_1_24_2": "15",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "78",
+        "field_1_27": "绮剧鍙戣偛杩熺紦锛岄渶瑕佸姞浠ュ叧娉ㄦ垨娌荤枟鐨勬樉钁楄涓虹己闄?,
+        "field_1_28": "F79.100",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鏈变匠浣?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-24",
+        "field_2_10": "1",
+        "field_3_1": "14804.23",
+        "field_3_2": "67.50",
+        "field_3_3": "7877.88",
+        "field_3_4": "3029.58",
+        "field_3_5": "2334.61",
+        "field_3_6": "275.31",
+        "field_3_7": "274.86",
+        "field_3_8": "135.83",
+        "field_3_9": "0.00",
+        "field_3_10": "798.66",
+        "field_3_11": "77.50"
+    },
+    {
+        "field_1_1": "02",
+        "field_1_2": "7",
+        "field_1_3": "637",
+        "field_1_4": "榛勫欢寮?,
+        "field_1_11": "410182199709283317",
+        "field_1_5": "1",
+        "field_1_6": "1997-09-28",
+        "field_1_7": "28",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪佹柊瀵嗗競鑻熷爞闀囩煶搴欐潙鐜嬬搴电粍",
+        "field_1_9_native": "娌冲崡鐪佹柊瀵嗗競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪佹柊瀵嗗競鑻熷爞闀囩煶搴欐潙鐜嬬搴电粍",
+        "field_1_15": "13603450771",
+        "field_1_16": "娌冲崡鐪佹柊瀵嗗競鑻熷爞闀囩煶搴欐潙鐜嬬搴电粍",
+        "field_1_17": "榛勮壋鐜?,
+        "field_1_18": "7",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-08",
+        "field_1_22_2": "10",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-24",
+        "field_1_24_2": "15",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "77",
+        "field_1_27": "绮剧鍙戣偛杩熺紦锛岄渶瑕佸姞浠ュ叧娉ㄦ垨娌荤枟鐨勬樉钁楄涓虹己闄?,
+        "field_1_28": "F79.100",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鐜嬮『灏?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-24",
+        "field_2_10": "1",
+        "field_3_1": "12468.63",
+        "field_3_2": "69.20",
+        "field_3_3": "6025.59",
+        "field_3_4": "2990.34",
+        "field_3_5": "2282.21",
+        "field_3_6": "275.31",
+        "field_3_7": "50.76",
+        "field_3_8": "44.28",
+        "field_3_9": "8.28",
+        "field_3_10": "716.86",
+        "field_3_11": "75.00"
+    },
+    {
+        "field_1_1": "02",
+        "field_1_2": "4",
+        "field_1_3": "644",
+        "field_1_4": "鍛ㄩ摱鐜?,
+        "field_1_11": "410126196206233321",
+        "field_1_5": "2",
+        "field_1_6": "1962-06-23",
+        "field_1_7": "63",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪佹柊瀵嗗競鑻熷爞闀囧瓩瀹跺簞鏉戠帇搴?4鍙?,
+        "field_1_9_native": "娌冲崡鐪佹柊瀵嗗競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪佹柊瀵嗗競鑻熷爞闀囧瓩瀹跺簞鏉戠帇搴?4鍙?,
+        "field_1_15": "13733605126",
+        "field_1_16": "娌冲崡鐪佹柊瀵嗗競鑻熷爞闀囧瓩瀹跺簞鏉戠帇搴?4鍙?,
+        "field_1_17": "鐜嬪皬鐏?,
+        "field_1_18": "2",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-10",
+        "field_1_22_2": "15",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-25",
+        "field_1_24_2": "09",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "76",
+        "field_1_27": "绮剧鍒嗚鐥?,
+        "field_1_28": "F20.900",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鏈变匠浣?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-25",
+        "field_2_10": "1",
+        "field_3_1": "14075.21",
+        "field_3_2": "73.80",
+        "field_3_3": "8000.73",
+        "field_3_4": "2911.86",
+        "field_3_5": "2204.91",
+        "field_3_6": "275.31",
+        "field_3_7": "50.76.",
+        "field_3_8": "54.77",
+        "field_3_9": "12.72",
+        "field_3_10": "494.15",
+        "field_3_11": "70.00"
+    },
+    {
+        "field_1_1": "02",
+        "field_1_2": "8",
+        "field_1_3": "645",
+        "field_1_4": "濮氬紶鍗?,
+        "field_1_11": "410122197307229822",
+        "field_1_5": "2",
+        "field_1_6": "1973-07-22",
+        "field_1_7": "52",
+        "field_1_8": "CHN",
+        "field_1_9": "娌冲崡鐪佷腑鐗熷競濮氬涔′汉姘戣矾01鍙?,
+        "field_1_9_native": "娌冲崡鐪佷腑鐗熷競",
+        "field_1_10": "姹夋棌",
+        "field_1_12": "鍐滄皯",
+        "field_1_13": "鏈",
+        "field_1_14": "娌冲崡鐪佷腑鐗熷競濮氬涔′汉姘戣矾01鍙?,
+        "field_1_15": "19138111338",
+        "field_1_16": "娌冲崡鐪佷腑鐗熷競濮氬涔′汉姘戣矾01鍙?,
+        "field_1_17": "姊佸尰鐢?,
+        "field_1_18": "8",
+        "field_1_21": "2",
+        "field_1_22_1": "2025-10-11",
+        "field_1_22_2": "16",
+        "field_1_23": "绮剧绉?,
+        "field_1_24_1": "2025-12-24",
+        "field_1_24_2": "15",
+        "field_1_25": "绮剧绉?,
+        "field_1_26": "74",
+        "field_1_27": "绮剧鍙戣偛杩熺紦锛岄渶瑕佸姞浠ュ叧娉ㄦ垨娌荤枟鐨勬樉钁楄涓虹己闄?,
+        "field_1_28": "F79.100",
+        "field_1_29": "1",
+        "field_2_1": "鐜嬫澗宀?,
+        "field_2_2": "娌堢孩姊?,
+        "field_2_3": "闆峰．",
+        "field_2_4": "鐜嬫澗宀?,
+        "field_2_5": "鐜嬮『灏?,
+        "field_2_6": "1",
+        "field_2_7": "鐜嬫澗宀?,
+        "field_2_8": "寮犵拹",
+        "field_2_9": "2025-12-24",
+        "field_2_10": "1",
+        "field_3_1": "11931.29",
+        "field_3_2": "57.50",
+        "field_3_3": "5760.72",
+        "field_3_4": "2852.19",
+        "field_3_5": "2185.01",
+        "field_3_6": "275.31",
+        "field_3_7": "91.26",
+        "field_3_8": "62.57",
+        "field_3_9": "0.00",
+        "field_3_10": "636.73",
+        "field_3_11": "67.50"
+    }
+];
+        let currentIndex = 0;
+        let isEdit = false;
+
+        const KEY = 'med_records_lite_v1768462060';
+
+        function init() {
+            const saved = localStorage.getItem(KEY);
+            if (saved) {
+                try {
+                    records = JSON.parse(saved);
+                    if (!Array.isArray(records) || records.length === 0) records = [Object.assign({}, defaultRecord)];
+                } catch (e) { console.error(e); }
+            }
+            // Sanitize Data: If Contact Name (1_17) == Patient Name (1_4), clear Contact
+            records.forEach(r => {
+                if (r['field_1_4'] && r['field_1_17'] && r['field_1_4'].trim() === r['field_1_17'].trim()) {
+                    r['field_1_17'] = ""; // Clear invalid contact
+                }
+            });
+            render();
+        }
+
+        function render() {
+            if (currentIndex < 0) currentIndex = 0;
+            if (currentIndex >= records.length) currentIndex = records.length - 1;
+
+            document.getElementById('pageInfo').innerText = `${currentIndex + 1} / ${records.length}`;
+
+            const rec = records[currentIndex];
+            const fields = document.querySelectorAll('.value[data-key]');
+
+            fields.forEach(f => {
+                const k = f.dataset.key;
+                // If record has value, show it. If not, show logic: 
+                // Don't clear defaults like "CHN" if record doesn't have key? 
+                // Better: record MUST have key if it's saving state.
+                // If it's undefined, check if HTML has text (default)
+                if (rec[k] !== undefined) f.innerText = rec[k];
+                else {
+                    // Check if it's a static fixed field (like 'CHN')
+                    if (!f.innerText) f.innerText = "";
+                }
+
+                // Allow edit
+                f.contentEditable = isEdit;
+            });
+        }
+
+        function nav(dir) {
+            const next = currentIndex + dir;
+            if (next >= 0 && next < records.length) {
+                currentIndex = next;
+                render();
+            }
+        }
+
+        function toggleEdit() {
+            isEdit = !isEdit;
+            document.body.classList.toggle('edit-mode', isEdit);
+            document.getElementById('btnEdit').innerText = isEdit ? "鉁? : "鉁忥笍";
+            render(); // re-apply contentEditable
+        }
+
+        function save() {
+            if (currentIndex < 0) return;
+
+            // Sync values from UI to record object
+            document.querySelectorAll('.value').forEach(div => {
+                const key = div.dataset.key;
+                if (!key || key === "ph_auto") return;
+                records[currentIndex][key] = div.innerText.trim();
+            });
+
+            // Validate fees before saving
+            if (!validateFees(records[currentIndex])) {
+                // Check returns false but we still proceed to save? 
+                // User asked to "Check", implies warning. If block needed, change logic.
+                // For now, warning is sufficient.
+            }
+
+            localStorage.setItem(KEY, JSON.stringify(records));
+            showToast('宸蹭繚瀛橈紒');
+        }
+
+        function reset() {
+            if (confirm("娓呯┖骞堕噸缃紵")) {
+                localStorage.removeItem(KEY);
+                location.reload();
+            }
+        }
+
+        function exportJSON() {
+            navigator.clipboard.writeText(JSON.stringify(records, null, 2));
+            showToast('JSON Copied!');
+        }
+
+        // Fee Validation
+        function validateFees(record) {
+            // Get Total Fee
+            const total = parseFloat(record.field_3_1 || 0);
+
+            // Sum Sub-fees: field_3_3 to field_3_11
+            const subFees = [
+                "field_3_3", "field_3_4", "field_3_5",
+                "field_3_6", "field_3_7", "field_3_8",
+                "field_3_9", "field_3_10", "field_3_11"
+            ];
+
+            let sum = 0;
+            subFees.forEach(key => {
+                sum += parseFloat(record[key] || 0);
+            });
+
+            // Tolerance for floating point math
+            if (Math.abs(total - sum) > 0.05) {
+                const diff = (total - sum).toFixed(2);
+                alert(`鈿狅笍 璐圭敤鏍￠獙璀﹀憡锛歕n\n鎬昏垂鐢?(${total}) 涓?鍒嗛」涔嬪拰 (${sum.toFixed(2)}) 涓嶇锛乗n宸锛?{diff}\n\n璇锋鏌ャ€愭ā鍧椾笁銆戠殑璐圭敤褰曞叆銆俙);
+                return false;
+            }
+            return true;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 1000);
+        }
+
+        // Live binding for edit
+        document.addEventListener('input', e => {
+            if (!isEdit) return;
+            const target = e.target;
+            if (target.classList.contains('value') && target.dataset.key) {
+                const k = target.dataset.key;
+                const v = target.innerText;
+
+                // Update record
+                records[currentIndex][k] = v;
+
+                // Update ALL fields with same key (Sync duplicates)
+                const friends = document.querySelectorAll(`.value[data-key="${k}"]`);
+                friends.forEach(f => {
+                    if (f !== target) f.innerText = v;
+                });
+
+                // Auto-save debounce could go here, but manual save is safer
+            }
+        });
+
+        // Init
+        init();
+
+    </script>
+</body>
+
+</html>

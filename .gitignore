@@ -1,0 +1,26 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.pytest_cache/
+.vscode/
+.idea/
+
+# 💡 Privacy & Data (CRITICAL)
+# 排除包含真实病案的文档和数据库
+病历文档/*
+!病历文档/.gitkeep
+medical_record_lite.html
+
+# 打包文件
+build/
+dist/
+*.spec
+
+# OS files
+Thumbs.db
+desktop.ini
